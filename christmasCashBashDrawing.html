@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Countdown to Draw</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(#0b0f1a, #1c1f2b);
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        overflow: hidden;
+      }
+      #countdown {
+        font-size: 4em;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+      #label {
+        font-size: 1.8em;
+        margin-bottom: 15px;
+        color: #a3d9ff;
+      }
+      #message {
+        font-size: 2em;
+        color: #ffcc00;
+        margin-top: 20px;
+        visibility: hidden;
+        text-shadow: 0 0 10px #ffcc00;
+        text-align: center;
+      }
+
+      /* Christmas Snow */
+      .snowflake {
+        position: fixed;
+        top: -10px;
+        left: 50%;
+        font-size: 1em;
+        color: white;
+        opacity: 0.8;
+        animation: fall linear infinite;
+      }
+
+      @keyframes fall {
+        to {
+          transform: translateY(110vh);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="label"></div>
+    <div id="countdown">--:--:--</div>
+    <div id="message"></div>
+
+    <script>
+      const countdownEl = document.getElementById("countdown");
+      const messageEl = document.getElementById("message");
+      const labelEl = document.getElementById("label");
+
+      let interval;
+      let showMessageTimeout;
+      const easternTZ = "America/New_York";
+
+      // 🎄 Christmas messages
+      const christmasMsgs = [
+        "🎅 Ho Ho Ho! 🎅",
+        "🎄 Merry Christmas! 🎄",
+        "⭐ A festive moment has arrived! ⭐",
+        "⛄ Frosty approves this draw! ⛄",
+      ];
+
+      const drawTimes = ["16:00", "16:30", "17:00", "17:30", "18:00"];
+
+      function getEasternTime() {
+        return new Date(
+          new Date().toLocaleString("en-US", { timeZone: easternTZ })
+        );
+      }
+
+      function getNextDrawTime(now) {
+        for (const t of drawTimes) {
+          const [h, m] = t.split(":").map(Number);
+          const next = new Date(now);
+          next.setHours(h, m, 0, 0);
+          if (next > now) return next;
+        }
+        return null;
+      }
+
+      function formatHMS(seconds) {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        return (
+          String(h).padStart(2, "0") +
+          ":" +
+          String(m).padStart(2, "0") +
+          ":" +
+          String(s).padStart(2, "0")
+        );
+      }
+
+      function updateCountdown() {
+        const now = getEasternTime();
+        const nextDraw = getNextDrawTime(now);
+
+        if (!nextDraw) {
+          clearInterval(interval);
+          labelEl.textContent = "";
+          countdownEl.textContent = "🎉 Done for Today 🎉";
+          return;
+        }
+
+        const timeLeft = Math.max(0, Math.floor((nextDraw - now) / 1000));
+
+        // Get the hour of the first draw dynamically
+        const firstDrawHour = parseInt(drawTimes[0].split(":")[0], 10);
+
+        // Only show the label if we are NOT currently firing a draw
+        if (messageEl.style.visibility !== "visible") {
+          if (now.getHours() < firstDrawHour) {
+            labelEl.textContent = "🎄 First drawing in:";
+          } else {
+            labelEl.textContent = "🎁 Next drawing in:";
+          }
+        }
+
+        countdownEl.textContent = formatHMS(timeLeft);
+
+        if (timeLeft === 1) {
+          triggerDrawMessage();
+        }
+      }
+
+      // 🎄 Snow Effect
+      function spawnSnow() {
+        const flake = document.createElement("div");
+        flake.className = "snowflake";
+        flake.textContent = "❄";
+
+        flake.style.left = Math.random() * 100 + "vw";
+        flake.style.fontSize = Math.random() * 12 + 10 + "px";
+        flake.style.animationDuration = Math.random() * 3 + 4 + "s";
+
+        document.body.appendChild(flake);
+        setTimeout(() => flake.remove(), 7000);
+      }
+
+      function triggerDrawMessage() {
+        const randomMsg =
+          christmasMsgs[Math.floor(Math.random() * christmasMsgs.length)];
+
+        // Hide countdown label during message
+        labelEl.textContent = "";
+
+        messageEl.innerHTML = `
+            <div>${randomMsg}</div>
+            <div style="margin-top:8px; font-size:1.2em; color:#ffffff;">
+            🎟️ Time to draw a ticket! 🎟️
+            </div>
+        `;
+
+        messageEl.style.visibility = "visible";
+
+        clearTimeout(showMessageTimeout);
+        showMessageTimeout = setTimeout(() => {
+          messageEl.style.visibility = "hidden";
+        }, 15000);
+      }
+      setInterval(spawnSnow, 200);
+
+      updateCountdown();
+      interval = setInterval(updateCountdown, 1000);
+    </script>
+  </body>
+</html>
