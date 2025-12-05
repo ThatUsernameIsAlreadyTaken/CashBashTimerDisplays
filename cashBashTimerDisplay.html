@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Countdown to Draw</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #121212;
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+      }
+      #countdown {
+        font-size: 4em;
+      }
+      #message {
+        font-size: 2em;
+        color: #ffcc00;
+        margin-top: 20px;
+        visibility: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="countdown">--:--</div>
+    <div id="message">🎟️ Draw That Ticket 🎟️</div>
+
+    <script>
+      const countdownEl = document.getElementById("countdown");
+      const messageEl = document.getElementById("message");
+
+      let interval;
+      let showMessageTimeout;
+      const easternTZ = "America/New_York";
+
+      function getEasternTime() {
+        return new Date(
+          new Date().toLocaleString("en-US", { timeZone: easternTZ })
+        );
+      }
+
+      function getNextDrawTime(now) {
+        const hour = now.getHours();
+        const minutes = now.getMinutes();
+
+        if (hour < 12) {
+          // Before 12pm: next alarm at 12:00pm
+          const next = new Date(now);
+          next.setHours(12, 0, 0, 0);
+          return next;
+        } else if (hour >= 12 && hour < 14) {
+          // Between 12pm and 2pm: next 15-min interval
+          const next = new Date(now);
+          const nextMinutes = Math.ceil(minutes / 15) * 15;
+          next.setMinutes(nextMinutes, 0, 0);
+          if (nextMinutes === 60) {
+            next.setHours(hour + 1, 0, 0, 0);
+          }
+          return next;
+        } else if (hour === 14 && minutes < 30) {
+          // Between 2pm and 2:30pm: final alarm at 2:30pm
+          const next = new Date(now);
+          next.setHours(14, 30, 0, 0);
+          return next;
+        } else {
+          return null; // Past final draw
+        }
+      }
+
+      function updateCountdown() {
+        const now = getEasternTime();
+        const nextDraw = getNextDrawTime(now);
+
+        if (!nextDraw) {
+          clearInterval(interval);
+          countdownEl.textContent = "🎉 Done for Today 🎉";
+          return;
+        }
+
+        const timeLeft = Math.max(0, Math.floor((nextDraw - now) / 1000));
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        countdownEl.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+        if (timeLeft === 0) {
+          triggerDrawMessage();
+        }
+      }
+
+      function triggerDrawMessage() {
+        messageEl.style.visibility = "visible";
+
+        // Hide message after 10 seconds
+        clearTimeout(showMessageTimeout);
+        showMessageTimeout = setTimeout(() => {
+          messageEl.style.visibility = "hidden";
+        }, 10000);
+      }
+
+      // Start ticking
+      updateCountdown();
+      interval = setInterval(updateCountdown, 1000);
+    </script>
+  </body>
+</html>
